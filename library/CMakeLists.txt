@@ -5,6 +5,9 @@ set(HELLO_HIP_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 include(src/CMakeLists.txt)
 
 
+include(${PROJECT_SOURCE_DIR}/cmake/FetchOrochi.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/FindHIPRT.cmake)
+
 add_library(hello_hip ${HELLO_HIP_SOURCE})
 
 ####################################################
@@ -43,8 +46,9 @@ set(HELLO_HIP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_include_directories(hello_hip
   PUBLIC ${HELLO_HIP_INCLUDE_DIR}
-  PRIVATE /opt/rocm/include
-  PRIVATE /opt/rocm/hip/include/
+  SYSTEM PRIVATE /opt/rocm/include
+  SYSTEM PRIVATE /opt/rocm/hip/include/
+  SYSTEM PRIVATE ${HIPRT_INCLUDE_DIRS}
 )
 
 ####################################################
@@ -54,10 +58,11 @@ target_link_directories(hello_hip
   PRIVATE /opt/rocm/lib
 )
 
-# target_link_libraries(hello_hip
-#   PRIVATE rocrand
-#   PRIVATE rocsparse
-# )
+target_link_libraries(hello_hip
+  PRIVATE ${HIPRT_LIBRARIES}
+  # PRIVATE rocrand
+  # PRIVATE rocsparse
+)
 
 ####################################################
 ############ TARGET COMPILE OPTIONS ################

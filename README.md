@@ -48,7 +48,7 @@ This will generate the example executable in `bin` directory under `build`, whic
 ```
 
 ## Directory Structure
-This template follows a standard C++ library's directory structure. Important directories are `library/src` for source files, `library/include` for library includes, `examples` for a simple "hello world" example that uses the library, and `unittests` for GoogleTests based testing framework.
+This template follows a standard C++ library's directory structure. Important directories are `library/src` for source files, `library/include` for library includes, `examples` for a simple "hello world" example that uses the library, and `unittests` for GoogleTests based testing framework. You must download and extract the `hiprt` libarary and place it inside the `hiprt` directory as shown below. You can find the HIP Ray Tracing library [here](https://gpuopen.com/hiprt/#download).
 ```
 .
 ├── CMakeLists.txt
@@ -56,6 +56,18 @@ This template follows a standard C++ library's directory structure. Important di
 ├── cmake
 ├── examples
 ├── externals
+    ├── hiprt  # Contents of this folder is NOT INCLUDED IN THIS REPO
+        ├── win
+        ├── buildID_linux.txt
+        ├── buildID_win.txt
+        ├── linux64
+        ├── README.md
+        ├── hiprt_common.h
+        ├── hiprt_device.h
+        ├── hiprtew.h
+        ├── hiprt.h
+        ├── hiprt_types.h
+        ├── hiprt_vec.h
 ├── library
 │   ├── include
 │   └── src

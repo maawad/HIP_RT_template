@@ -61,7 +61,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 ## HIP_ARCHITECTURES property from hello_hip project.
 ## see: get_target_properties()
 ## see: https://github.com/RadeonOpenCompute/rocminfo/blob/master/rocm_agent_enumerator#L12
-set(CMAKE_HIP_ARCHITECTURES gfx908)
+set(CMAKE_HIP_ARCHITECTURES gfx1100)
 
 ####################################################
 ############## SET CXX & HIP FLAGS ################
@@ -86,7 +86,7 @@ set(CXX_FLAGS
     -Wno-deprecated-builtins
     -Wno-ignored-attributes
     "-Wno-\#pragma-messages"
-  >
+    >
 )
 
 set(HIP_FLAGS
@@ -114,6 +114,7 @@ set(HIP_FLAGS
   -Wno-deprecated-builtins
   -Wno-ignored-attributes
   "-Wno-\#pragma-messages"
+  "-Wno-#warnings"
 )
 
 ####################################################
