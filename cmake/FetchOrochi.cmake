@@ -12,10 +12,13 @@ FetchContent_Declare(
     GIT_TAG        df8a401ebb1dbd1301a8281bd72acd449c6ae496
 )
 
-FetchContent_MakeAvailable(orochi)
-# get_target_property(orochi_type orochi TYPE)
-# message(STATUS "Orochi target type: ${orochi_type}")
+FetchContent_GetProperties(orochi)
+FetchContent_Populate(orochi)
+message(STATUS "Fetched Orochi source directory: ${orochi_SOURCE_DIR}")
 
+include_directories(${orochi_SOURCE_DIR})
 
-# add_library(orochi::orochi ALIAS orochi)
+# Add the Orochi source files to your project
+file(GLOB_RECURSE OROCHI_SOURCES "${orochi_SOURCE_DIR}/Orochi/*.cpp")
+add_library(orochi OBJECT ${OROCHI_SOURCES})
 
