@@ -18,11 +18,32 @@
 #define hiprt_try(call)                                         \
   do {                                                          \
     hiprtError err = call;                                      \
-    if (err != hipSuccess) {                                    \
+    if (err != hiprtSuccess) {                                  \
       printf("HIP RT error at %s %d: %i\n", __FILE__, __LINE__, \
              static_cast<int>(err));                            \
       std::terminate();                                         \
     }                                                           \
+  } while (0)
+
+#define orortc_try(call)                                         \
+  do {                                                           \
+    orortcResult err = call;                                     \
+    if (err != ORORTC_SUCCESS) {                                 \
+      printf("ORORTC  error at %s %d: %s\n", __FILE__, __LINE__, \
+             orortcGetErrorString(err));                         \
+      std::terminate();                                          \
+    }                                                            \
+  } while (0)
+
+#define oro_try(call)                                                  \
+  do {                                                                 \
+    oroError err = call;                                               \
+    if (err != oroSuccess) {                                           \
+      const char* msg;                                                 \
+      oroGetErrorString(err, &msg);                                    \
+      printf("Orochi  error at %s %d: %s\n", __FILE__, __LINE__, msg); \
+      std::terminate();                                                \
+    }                                                                  \
   } while (0)
 
 struct hip_device {

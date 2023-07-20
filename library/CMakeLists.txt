@@ -7,6 +7,7 @@ include(src/CMakeLists.txt)
 
 include(${PROJECT_SOURCE_DIR}/cmake/FetchOrochi.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/FindHIPRT.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/FetchStb.cmake)
 
 add_library(hello_hip ${HELLO_HIP_SOURCE})
 
@@ -60,6 +61,10 @@ target_link_directories(hello_hip
 
 target_link_libraries(hello_hip
   PRIVATE ${HIPRT_LIBRARIES}
+  PRIVATE ${orochi_objects}
+  PRIVATE cuew
+  PRIVATE orochi
+  PRIVATE hipew
   # PRIVATE rocrand
   # PRIVATE rocsparse
 )
