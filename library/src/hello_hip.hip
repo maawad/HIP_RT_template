@@ -61,12 +61,104 @@ void writeImage(const std::string& path, int w, int h, u8* pixels) {
   std::cout << "image written at " << path.c_str() << std::endl;
 }
 
+void init(int deviceIndex,
+          hiprtContextCreationInput& m_ctxtInput,
+          oroDevice& m_oroDevice,
+          oroCtx& m_oroCtx,
+          hiprtInt2& m_res) {
+  m_res = make_hiprtInt2(512, 512);
+
+  oro_try((oroError)oroInitialize((oroApi)(ORO_API_HIP | ORO_API_CUDA), 0));
+
+  oro_try(oroInit(0));
+  oro_try(oroDeviceGet(&m_oroDevice, deviceIndex));
+  oro_try(oroCtxCreate(&m_oroCtx, 0, m_oroDevice));
+
+  oroDeviceProp props;
+  oro_try(oroGetDeviceProperties(&props, m_oroDevice));
+
+  std::cout << "hiprt ver." << HIPRT_VERSION_STR << std::endl;
+  std::cout << "Executing on '" << props.name << "'" << std::endl;
+  if (std::string(props.name).find("NVIDIA") != std::string::npos)
+    m_ctxtInput.deviceType = hiprtDeviceNVIDIA;
+  else
+    m_ctxtInput.deviceType = hiprtDeviceAMD;
+
+  m_ctxtInput.ctxt = oroGetRawCtx(m_oroCtx);
+  m_ctxtInput.device = oroGetRawDevice(m_oroDevice);
+}
+
+void buildTraceKernelFromBitcode(hiprtContext ctxt,
+                                 const char* functionName,
+                                 oroFunction& functionOut,
+                                 int numGeomTypes = 0,
+                                 int numRayTypes = 1) {
+  size_t binarySize = 0;
+  std::vector<const char*> options;
+  std::vector<std::string> includeNamesData;
+
+  std::vector<std::string> headersData(includeNamesData.size());
+  std::vector<const char*> headers;
+  std::vector<const char*> includeNames;
+
+  const bool isAmd = oroGetCurAPI(0) == ORO_API_HIP;
+  if (isAmd) {
+    options.push_back("-fgpu-rdc");
+    options.push_back("-Xclang");
+    options.push_back("-mno-constructor-aliases");
+  } else {
+    options.push_back("--device-c");
+    options.push_back("-arch=compute_60");
+  }
+  options.push_back("-std=c++17");
+
+  const std::string sourceCode = R"(
+#include <hiprt/hiprt_device.h>
+#include <hiprt/hiprt_vec.h>   
+
+extern "C" __global__ void GeomIntersectionKernel(hiprtGeometry geom, u8* pixels, int2 res)
+{
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    float3 o = { x / (float)res.x, y / (float)res.y, -1.0f };
+    float3 d = { 0.0f, 0.0f, 1.0f };
+
+    hiprtRay ray;
+    ray.origin = o;
+    ray.direction = d;
+
+    hiprtGeomTraversalClosest tr(geom, ray);
+    hiprtHit hit = tr.getNextHit();
+
+    int pixelIndex = x + y * res.x;
+    pixels[pixelIndex * 4 + 0] = hit.hasHit() ? ((float)x / res.x) * 255 : 0;
+    pixels[pixelIndex * 4 + 1] = hit.hasHit() ? ((float)y / res.y) * 255 : 0;
+    pixels[pixelIndex * 4 + 2] = 0;
+    pixels[pixelIndex * 4 + 3] = 255;
+}
+)";
+
+  uint32_t num_functions = 1;
+  hiprtApiFunction function;
+  hiprtApiModule module;
+  std::string module_name = "test";
+  hiprt_try(hiprtBuildTraceKernels(
+      ctxt, num_functions, &functionName, module_name.data(), sourceCode.data(),
+      0, nullptr, nullptr, options.size(), options.data(), numGeomTypes,
+      numRayTypes, nullptr, &function, &module));
+
+  functionOut = *(oroFunction*)&function;
+}
 void run() {
   std::cout << "run()" << std::endl;
   hiprtContextCreationInput m_ctxtInput;
   oroCtx m_oroCtx;
   oroDevice m_oroDevice;
   hiprtInt2 m_res;
+
+  init(0, m_ctxtInput, m_oroDevice, m_oroCtx, m_res);
+
   std::cout << "declare" << std::endl;
   hiprtContext ctxt;
   hiprt_try(hiprtCreateContext(HIPRT_API_VERSION, m_ctxtInput, &ctxt));
@@ -114,8 +206,7 @@ void run() {
                                &options, geomTemp, 0, geom));
 
   oroFunction func;
-  // buildTraceKernelFromBitcode(ctxt, "../common/TutorialKernels.h",
-  //                             "GeomIntersectionKernel", func);
+  buildTraceKernelFromBitcode(ctxt, "GeomIntersectionKernel", func);
 
   u8* pixels;
   oro_try(oroMalloc((oroDeviceptr*)&pixels, m_res.x * m_res.y * 4));
